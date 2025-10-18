@@ -1,7 +1,6 @@
 import time
 from mocap_api import *
 
-
 def get_event_type_name(event_type_value):
     """
     Convert event type value to corresponding enum name
