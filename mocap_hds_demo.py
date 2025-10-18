@@ -30,11 +30,6 @@ class MocapHDSDemo:
         self.app.open()
         print(f"Mocap应用已初始化，UDP端口: {udp_port}")
         
-        # 处理事件循环
-        if not self.app:
-            print("错误：Mocap应用尚未初始化")
-            return
-        
         self.running = True
         try:
             while self.running:
