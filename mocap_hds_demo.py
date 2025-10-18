@@ -1,73 +1,94 @@
 import time
-from mocap_api.mocap_api import *
+from mocap_api import *
+
+
+def get_event_type_name(event_type_value):
+    """
+    Convert event type value to corresponding enum name
+    
+    Args:
+        event_type_value: The numeric event type value
+        
+    Returns:
+        str: The corresponding event type name
+    """
+    event_type_map = {
+        MCPEventType.InvalidEvent: 'InvalidEvent',
+        MCPEventType.AvatarUpdated: 'AvatarUpdated',
+        MCPEventType.TrackerUpdated: 'TrackerUpdated',
+        MCPEventType.AliceIMUUpdated: 'AliceIMUUpdated',
+        MCPEventType.AliceRigidbodyUpdated: 'AliceRigidbodyUpdated',
+        MCPEventType.AliceTrackerUpdated: 'AliceTrackerUpdated',
+        MCPEventType.AliceMarkerUpdated: 'AliceMarkerUpdated',
+    }
+    return event_type_map.get(event_type_value, f'Unknown({event_type_value})')
 
 
 class MocapHDSDemo:
     """
-    Mocap HDS Demo类，用于演示Mocap API的基本功能
+    Mocap Hybrid Data Server Demo class for demonstrating how to get Hybrid Data Server data through Mocap API
     """
     
     def __init__(self):
         """
-        初始化Mocap HDS Demo实例
+        Initialize Mocap HDS Demo instance
         """
         self.app = None
         self.running = False
     
     def start(self, udp_port=7012):
         """
-        启动Mocap应用并处理事件循环
+        Start Mocap application and handle event loop
         
         Args:
-            udp_port: UDP端口号，默认为7012
+            udp_port: UDP port number, default is 7012
         """
-        # 初始化Mocap应用
+        # Initialize Mocap application
         self.app = MCPApplication()
         settings = MCPSettings()
         settings.set_udp(udp_port)
         settings.set_bvh_rotation(MCPBvhRotation.XYZ)
         self.app.set_settings(settings)
         self.app.open()
-        print(f"Mocap应用已初始化，UDP端口: {udp_port}")
+        print(f"Mocap application initialized, UDP port: {udp_port}")
         
         self.running = True
         try:
             while self.running:
                 evts = self.app.poll_next_event()
                 for evt in evts:
-                    if evt.event_type == MCPEventType.AvatarUpdated:
+                    if evt.event_type == MCPEventType.AvatarUpdated: # avatar bvh
                         self._handle_avatar_data(evt)
-                    elif evt.event_type == MCPEventType.RigidBodyUpdated:
-                        print('rigid body updated')
-                    elif evt.event_type == MCPEventType.AliceTrackerUpdated:
+                    elif evt.event_type == MCPEventType.AliceTrackerUpdated: # tracker
                         self._handle_tracker_data()
-                    elif evt.event_type == MCPEventType.AliceMarkerUpdated:
+                    elif evt.event_type == MCPEventType.AliceMarkerUpdated: # marker
                         self._handle_marker_data()
                     else:
-                        print('unknown event')
+                        print('Other events:', get_event_type_name(evt.event_type))
                 time.sleep(0.001)
         except KeyboardInterrupt:
-            print("程序被用户中断")
+            print("Program interrupted by user")
         finally:
             self.stop()
 
     def _handle_marker_data(self):
         """
-        处理 marker data
+        Handle marker data
         """
         alicehub = MCPAliceHub()
         recv, count = alicehub.get_marker_list()
         if count > 0:
             recv, count1 = alicehub.get_marker_list(count)
+            timestamp = alicehub.get_marker_timestamp()
             for i in range(count):
                 marker_handle = recv[i]
                 marker = MCPMarker(marker_handle)
                 marker_x, marker_y, marker_z = marker.get_marker_position()
-                print(f'marker data : position: {marker_x}, {marker_y}, {marker_z}')
+                print(f'marker data : timestamp: {timestamp}, position: {marker_x}, {marker_y}, {marker_z}')
     
     def _handle_tracker_data(self):
         """
-        处理 tracker data
+        Handle tracker data
         """
         alicehub = MCPAliceHub()
         recv, count = alicehub.get_PWR_list()
@@ -85,10 +106,10 @@ class MocapHDSDemo:
 
     def _handle_avatar_data(self, evt):
         """
-        处理 avatar data
+        Handle avatar data
         """
         avatar = MCPAvatar(evt.event_data.avatar_handle)
-        # 获取并打印时间码信息
+        # Get and print timecode information
         second, nanosecond = avatar.get_avatar_posture_ptp_time()
         print(f" avatar posture ptp time : {second},{nanosecond}")
         joints = avatar.get_joints()  # Get all joint data
@@ -100,15 +121,15 @@ class MocapHDSDemo:
    
     def stop(self):
         """
-        关闭Mocap应用
+        Close Mocap application
         """
         self.running = False
         if self.app:
             self.app.close()
-            print("Mocap应用已关闭")
+            print("Mocap application closed")
 
 if __name__ == "__main__":
-    # 创建并运行演示实例
+    # Create and run demo instance
     demo = MocapHDSDemo()
-    print("启动Mocap HDS演示...")
+    print("Starting Mocap HDS demo...")
     demo.start()

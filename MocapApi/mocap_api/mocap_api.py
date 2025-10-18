@@ -4,7 +4,8 @@ from platform import *
 import time
 import os
 
-# 加载动态链接库
+__version__ = "0.1.0"
+
 architecture = machine()
 mocap_file_path = None
 mocap_file_name = None
@@ -523,7 +524,7 @@ class MCPAvatar(object):
     return hour.value, minute.value, second.value, frame.value, rate.value
   
   def get_avatar_posture_ptp_time(self):
-    second = c_uint32(0)  
+    second = c_uint32(0)   
     nanosecond = c_uint32(0)   
     err = self.api.contents.GetAvatarPosturePtpTime(byref(second), byref(nanosecond), self.handle)
     if err != MCPError.NoError:
@@ -588,20 +589,16 @@ class MCPCalibrateMotionProgress(object):
         p_len_of_name = c_uint32(0)
         p_name = None
 
-        # 第一次调用获取名称长度
         err = self.api.contents.GetCalibrateMotionProgressStepOfCurrentPose(byref(current_step), p_name, byref(p_len_of_name), self.handle)
         if err != MCPError.NoError:
             raise RuntimeError('GetProgress step Of current Pose  with error {0}'.format(MCPError._fields[err])) 
 
-        # 根据返回的长度重新分配空间
         p_name = create_string_buffer(p_len_of_name.value)
 
-        # 第二次调用获取名称
         err_ = self.api.contents.GetCalibrateMotionProgressStepOfCurrentPose(byref(current_step), p_name, byref(p_len_of_name), self.handle)
         if err_ != MCPError.NoError:
             raise RuntimeError('GetProgress step Of current Pose  with error {0}'.format(MCPError._fields[err_])) 
 
-        # 将C风格字符串转换为Python字符串
         p_name_str = p_name.value.decode('utf-8')
         return  current_step.value, p_name_str
     
@@ -610,20 +607,16 @@ class MCPCalibrateMotionProgress(object):
         p_len_of_name = c_uint32(0)
         p_name = None
 
-        # 第一次调用获取名称长度
         err = self.api.contents.GetCalibrateMotionProgressCountdownOfCurrentPose(byref(countdown), p_name, byref(p_len_of_name), self.handle)
         if err != MCPError.NoError:
             raise RuntimeError('GetProgress step Of current Pose  with error {0}'.format(MCPError._fields[err])) 
 
-        # 根据返回的长度重新分配空间
         p_name = create_string_buffer(p_len_of_name.value)
 
-        # 第二次调用获取名称
         err_ = self.api.contents.GetCalibrateMotionProgressCountdownOfCurrentPose(byref(countdown), p_name, byref(p_len_of_name), self.handle)
         if err_ != MCPError.NoError:
             raise RuntimeError('GetProgress step Of current Pose  with error {0}'.format(MCPError._fields[err_])) 
 
-        # 将C风格字符串转换为Python字符串
         p_name_str = p_name.value.decode('utf-8')
         return  countdown.value, p_name_str
     
@@ -633,20 +626,16 @@ class MCPCalibrateMotionProgress(object):
         p_len_of_name = c_uint32(0)
         p_name = None
 
-        # 第一次调用获取名称长度
         err = self.api.contents.GetCalibrateMotionProgressProgressOfCurrentPose(byref(progress), p_name, byref(p_len_of_name), self.handle)
         if err != MCPError.NoError:
             raise RuntimeError('GetProgress step Of current Pose  with error {0}'.format(MCPError._fields[err])) 
 
-        # 根据返回的长度重新分配空间
         p_name = create_string_buffer(p_len_of_name.value)
 
-        # 第二次调用获取名称
         err_ = self.api.contents.GetCalibrateMotionProgressProgressOfCurrentPose(byref(progress), p_name, byref(p_len_of_name), self.handle)
         if err_ != MCPError.NoError:
             raise RuntimeError('GetProgress step Of current Pose  with error {0}'.format(MCPError._fields[err_])) 
 
-        # 将C风格字符串转换为Python字符串
         p_name_str = p_name.value.decode('utf-8')
         return  progress.value, p_name_str
 
@@ -789,9 +778,6 @@ class MCPPWR(object):
              raise RuntimeError('GetPWRQuaternion failed with error {0}'.format(MCPError._fields[err]))
         return (p_x.value, p_y.value, p_z.value, p_w.value)
 
-
-
-
 MCPMarkerHandle = c_uint64
 MCPAliceBusHandle = c_uint64
 class MCPAliceHub(object):
@@ -799,19 +785,17 @@ class MCPAliceHub(object):
 
     class MCPAliceHubApi(Structure):
         _fields_ = [
-            ('GetSensorModuleList', CFUNCTYPE(c_int32, POINTER(c_char_p), MCPAliceBusHandle)),
-            ('GetSensorModuleTimestamp', CFUNCTYPE(c_int32, POINTER(c_char_p), MCPAliceBusHandle)),
+            ('GetSensorModuleList', CFUNCTYPE(c_int32, POINTER(MCPSensorModuleHandle), POINTER(c_int32))),
+            ('GetSensorModuleTimestamp', CFUNCTYPE(c_int32, POINTER(c_uint64))),
             ('GetMarkerList', CFUNCTYPE(c_int32, POINTER(MCPMarkerHandle), POINTER(c_int32))),
-            ('GetMarkerTimestamp', CFUNCTYPE(c_int32, POINTER(c_uint32))),
-            ('GetRigidBodyList', CFUNCTYPE(c_int32, MCPSensorModuleHandle, c_int32, POINTER(MCPAliceBusHandle))),
-            ('GetRigidBodyTimestamp', CFUNCTYPE(c_int32, MCPSensorModuleHandle, c_int32, POINTER(MCPAliceBusHandle))),
+            ('GetMarkerTimestamp', CFUNCTYPE(c_int32, POINTER(c_uint64))),
+            ('GetRigidBodyList', CFUNCTYPE(c_int32, POINTER(MCPRigidBodyHandle), POINTER(c_int32))),
+            ('GetRigidBodyTimestamp', CFUNCTYPE(c_int32, POINTER(c_uint64))),
             ('GetPWRList', CFUNCTYPE(c_int32, POINTER(MCPPWRHandle), POINTER(c_int32))),
-            ('GetPWRTimestamp', CFUNCTYPE(c_int32, POINTER(c_uint64))),
+            ('GetPWRTimestamp', CFUNCTYPE(c_int32, POINTER(c_uint64)))
         ]
 
     api = POINTER(MCPAliceHubApi)()
-
-    
 
     def __init__(self):
         if not self.api:
@@ -820,25 +804,87 @@ class MCPAliceHub(object):
                 raise RuntimeError('Cannot get MCPAliceHubApi: {0}'.format(MCPError._fields[err])) 
         self.handle = MCPAliceBusHandle()   
 
+    def get_sensor_module_list(self, count=None):
+        if count is None:
+            count = c_int32()
+            err = self.api.contents.GetSensorModuleList(None, byref(count))
+            if err != MCPError.NoError:
+               raise RuntimeError('Get sensor module list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
+            return None, count.value
+        else:
+            if isinstance(count, int):
+                count = c_int32(count)
+            handles = (MCPSensorModuleHandle * count.value)()
+            err = self.api.contents.GetSensorModuleList(handles, byref(count))
+            if err != MCPError.NoError:
+                raise RuntimeError('Get sensor module list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
+            return handles, count.value
+
+    def get_sensor_module_timestamp(self):
+        pTimestamp = c_uint64()
+        err = self.api.contents.GetSensorModuleTimestamp(byref(pTimestamp))
+        if err != MCPError.NoError:
+            raise RuntimeError('Get sensor module timestamp failed with error {0}'.format(MCPError._fields[err]))
+        return pTimestamp.value
+
     def get_marker_list(self, count=None):
         if count is None:
-            count = c_int32()  # 创建一个 c_int32 变量用于输出句柄数量
-            # 如果 count 为 None，表示只获取句柄数量，不传递句柄列表
+            count = c_int32()
             err = self.api.contents.GetMarkerList(None, byref(count))
             if err != MCPError.NoError:
                raise RuntimeError('Get marker list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
             return None, count.value
         else:
-            # 如果 count 是一个整数，表示需要分配句柄数组
             if isinstance(count, int):
-                count = c_int32(count)  # 将整数转换为 c_uint32
-            # 创建一个句柄数组
+                count = c_int32(count)
             handles = (MCPMarkerHandle * count.value)()
             err = self.api.contents.GetMarkerList(handles, byref(count))
             if err != MCPError.NoError:
                 raise RuntimeError('Get marker list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
             return handles, count.value
 
+    def get_marker_timestamp(self):
+        pTimestamp = c_uint64()
+        err = self.api.contents.GetPWRTimestamp(byref(pTimestamp))
+        if err != MCPError.NoError:
+            raise RuntimeError('Get PWR timestamp failed with error {0}'.format(MCPError._fields[err]))
+        return pTimestamp.value
+
+    def get_rigid_body_list(self, count=None):
+        if count is None:
+            count = c_int32()
+            err = self.api.contents.GetRigidBodyList(None, byref(count))
+            if err != MCPError.NoError:
+               raise RuntimeError('Get rigid body list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
+            return None, count.value
+        else:
+            if isinstance(count, int):
+                count = c_int32(count)
+                handles = (MCPRigidBodyHandle * count.value)()
+                err = self.api.contents.GetRigidBodyList(handles, byref(count))
+    
+    def get_rigid_body_timestamp(self):
+        pTimestamp = c_uint64()
+        err = self.api.contents.GetRigidBodyTimestamp(byref(pTimestamp))
+        if err != MCPError.NoError:
+            raise RuntimeError('Get rigid body timestamp failed with error {0}'.format(MCPError._fields[err]))
+        return pTimestamp.value
+
+    def get_PWR_list(self, count=None):
+        if count is None:
+            count = c_int32()
+            err = self.api.contents.GetPWRList(None, byref(count))
+            if err != MCPError.NoError:
+               raise RuntimeError('Get PWR list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
+            return None, count.value
+        else:
+            if isinstance(count, int):
+                count = c_int32(count)
+            handles = (MCPPWRHandle * count.value)()
+            err = self.api.contents.GetPWRList(handles, byref(count))
+            if err != MCPError.NoError:
+                raise RuntimeError('Get PWR list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
+            return handles, count.value
 
     def get_PWR_timestamp(self):
         pTimestamp = c_uint64()
@@ -846,29 +892,6 @@ class MCPAliceHub(object):
         if err != MCPError.NoError:
             raise RuntimeError('Get PWR timestamp failed with error {0}'.format(MCPError._fields[err]))
         return pTimestamp.value
-
-
-
-    def get_PWR_list(self, count=None):
-        if count is None:
-            count = c_int32()  # 创建一个 c_int32 变量用于输出句柄数量
-            # 如果 count 为 None，表示只获取句柄数量，不传递句柄列表
-            err = self.api.contents.GetPWRList(None, byref(count))
-            if err != MCPError.NoError:
-               raise RuntimeError('Get PWR list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
-            return None, count.value
-        else:
-            # 如果 count 是一个整数，表示需要分配句柄数组
-            if isinstance(count, int):
-                count = c_int32(count)  # 将整数转换为 c_uint32
-            # 创建一个句柄数组
-            handles = (MCPPWRHandle * count.value)()
-            err = self.api.contents.GetPWRList(handles, byref(count))
-            if err != MCPError.NoError:
-                raise RuntimeError('Get PWR list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
-            return handles, count.value
-        
-        
 
 
 MCPSensorModuleHandle = c_uint64
@@ -1617,16 +1640,9 @@ def test_mocap_api():
   while True:
     evts = app.poll_next_event()
     for evt in evts:
-      if evt.event_type == MCPEventType.AvatarUpdated:        
+      if evt.event_type == MCPEventType.AvatarUpdated:
         avatar = MCPAvatar(evt.event_data.avatar_handle)
-        # print(avatar.get_index())
-        # print(avatar.get_name())
-        hour, minute, second, frame, rate = avatar.get_avatar_posture_time_code()
-        print(f"get_avatar_posture_time_code():{hour},{minute},{second},{frame},{rate}")
-        hour, minute, second, millisecond = avatar.get_avatar_posture_time()
-        print(f"get_avatar_posture_time():{hour} , {minute} , {second} , {millisecond}")
         print(f"get_avatar_posture_ptp_time():{avatar.get_avatar_posture_ptp_time()}")
-        # print_joint(avatar.get_root_joint())
       elif evt.event_type == MCPEventType.RigidBodyUpdated:
         print('rigid body updated')
       elif evt.event_type == MCPEventType.AliceTrackerUpdated:
@@ -1647,7 +1663,6 @@ def  _handle_marker_data():
           marker = MCPMarker(marker_handle)
           position = marker.get_marker_position()
           print('position:', position)
-        
 
 
 def _handle_tracker_data():
