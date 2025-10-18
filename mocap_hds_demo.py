@@ -53,7 +53,7 @@ class MocapHDSDemo:
 
     def _handle_marker_data(self):
         """
-        处理标记点数据
+        处理 marker data
         """
         alicehub = MCPAliceHub()
         recv, count = alicehub.get_marker_list()
@@ -67,7 +67,7 @@ class MocapHDSDemo:
     
     def _handle_tracker_data(self):
         """
-        处理追踪器数据
+        处理 tracker data
         """
         alicehub = MCPAliceHub()
         recv, count = alicehub.get_PWR_list()
@@ -85,7 +85,7 @@ class MocapHDSDemo:
 
     def _handle_avatar_data(self, evt):
         """
-        处理 avatar 事件
+        处理 avatar data
         """
         avatar = MCPAvatar(evt.event_data.avatar_handle)
         # 获取并打印时间码信息
