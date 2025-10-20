@@ -4,7 +4,7 @@ from platform import *
 import time
 import os
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 architecture = machine()
 mocap_file_path = None
@@ -845,7 +845,7 @@ class MCPAliceHub(object):
 
     def get_marker_timestamp(self):
         pTimestamp = c_uint64()
-        err = self.api.contents.GetPWRTimestamp(byref(pTimestamp))
+        err = self.api.contents.GetMarkerTimestamp(byref(pTimestamp))
         if err != MCPError.NoError:
             raise RuntimeError('Get PWR timestamp failed with error {0}'.format(MCPError._fields[err]))
         return pTimestamp.value
