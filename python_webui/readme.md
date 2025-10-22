@@ -17,8 +17,7 @@ PN-Link 是诺亦腾公司推出的全身有线惯性动作捕捉产品，其工
 运行本工程需满足以下环境条件：
 
 - 编程语言：Python 3.x 及以上版本
-- 依赖库：需安装`nicegui`（可通过`pip install nicegui`完成）
-- ROS 环境：支持 ROS1 或 ROS2（ROS2 需 Foxy 及更高版本）
+- 依赖库：需安装`nicegui`（可通过`pip install nicegui==2.24.1`完成）
 - 浏览器：需支持 OpenGL 的现代浏览器（如 Chrome、Microsoft Edge 等）
 - 硬件设备：PN-Link 有线动捕套装
 
@@ -98,9 +97,6 @@ PN-Link 主节点默认参数如下：
 
 3. 打开浏览器，访问地址：[http://localhost:8080](http://localhost:8080/)
 
-### 特殊说明（ROS1 环境）
-
-- 若使用 ROS1，需**先启动`roscore`**，再执行上述启动步骤，否则可能导致数据传输异常。
 
 ## 五、指令说明
 
@@ -171,14 +167,7 @@ PN-Link 主节点默认参数如下：
 点击 “切换数据输出” 按钮可在两种模式间切换：
 
 - **3D Data**：输出完整骨骼位置与旋转数据，支持浏览器 3D 实时可视化
-- **Joint Data**：输出关节角度信息（经重定向处理），直接发布至 ROS 节点
-  - 动作数据通过 ROS 主题`/joint_states`发布，包含关节位置、角度等信息
-  
-  - 查看数据方法：在终端执行以下命令
-    
-    ```bash
-    rostopic echo /joint_states
-    ```
+- **Joint Data**：输出关节角度信息
 
 ### 6. 设备配置（PN-Link 设置）
 
@@ -190,7 +179,7 @@ PN-Link 主节点默认参数如下：
   
   
 
-## 八、常见问题解决
+## 七、常见问题解决
 
 ### 1. 连接失败
 
@@ -203,20 +192,13 @@ PN-Link 主节点默认参数如下：
 - 确保初始化阶段（Start Capture 后）保持姿态稳定达 15 秒以上
 - 检查旋转顺序配置是否与设备默认（XYZ）一致
 - 重启设备并重新执行校准流程
-
-### 3. ROS 数据未收到
-
-- **ROS1 用户**：确认已启动`roscore`，且 Web 服务器在`roscore`之后启动
-- 执行`rostopic list`命令，确认`/joint_states`主题存在
-- 检查 ROS 节点是否正常运行（可通过`rosnode list`查看）
   
   
 
-## 九、系统关闭
+## 八、系统关闭
 
 为避免数据丢失或设备异常，建议按以下步骤关闭系统：
 
 1. 点击 “Stop Capture” 按钮停止动作捕捉
 2. 关闭 Web 浏览器
 3. 在终端按`Ctrl+C`停止 Web 服务器
-4. 若使用 ROS，关闭所有 ROS 节点（ROS1 需额外关闭`roscore`）
