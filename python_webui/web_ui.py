@@ -11,7 +11,7 @@ from nicegui import ui, app
 
 # 假设这些类和模块已经正确实现
 from mocap_api import EMCPCommand
-from web_config import *
+from config import *
 from mocap_direct import MCPProcess
 
 

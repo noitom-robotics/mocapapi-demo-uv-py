@@ -4,7 +4,7 @@ from mocap_api import MCPAvatar
 import multiprocessing
 import logging
 from mocap_api import *
-from web_config import *
+from config import *
 
 # 设置日志格式
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
