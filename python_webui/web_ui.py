@@ -1,6 +1,3 @@
-import sys
-sys.path.append(r'./3rdparty/MocapApi')
-sys.path.append(r'./3rdparty/robot-retargeting')
 import json
 import logging
 import os
@@ -15,7 +12,7 @@ from nicegui import ui, app
 # 假设这些类和模块已经正确实现
 from mocap_api import EMCPCommand
 from web_config import *
-from mocap_retargeting_ros import MCPProcess
+from mocap_direct import MCPProcess
 
 
 class WebControlPanel:
