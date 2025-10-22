@@ -1,8 +1,8 @@
 from enum import Enum
 
-SERVER_IP = '192.168.31.134'
+SERVER_IP = '192.168.66.134'
 SERVER_PORT = 7003
-CLIENT_IP = '192.168.31.77'
+CLIENT_IP = '192.168.66.78'
 CLIENT_PORT = 7012
 
 class MsgType(Enum):
