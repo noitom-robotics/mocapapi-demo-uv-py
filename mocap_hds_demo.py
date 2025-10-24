@@ -1,4 +1,6 @@
 import time
+import sys
+import os
 from mocap_api import *
 
 def get_event_type_name(event_type_value):
@@ -16,7 +18,7 @@ def get_event_type_name(event_type_value):
         MCPEventType.AvatarUpdated: 'AvatarUpdated',
         MCPEventType.TrackerUpdated: 'TrackerUpdated',
         MCPEventType.AliceIMUUpdated: 'AliceIMUUpdated',
-        MCPEventType.AliceRigidbodyUpdated: 'AliceRigidbodyUpdated',
+        MCPEventType.AliceRigidbodyUpdated: 'AliceRigidbodyUpdated',  
         MCPEventType.AliceTrackerUpdated: 'AliceTrackerUpdated',
         MCPEventType.AliceMarkerUpdated: 'AliceMarkerUpdated',
     }
@@ -33,7 +35,7 @@ class MocapHDSDemo:
         Initialize Mocap HDS Demo instance
         """
         self.app = None
-        self.running = False
+        self.running = False  
     
     def start(self, udp_port=7012):
         """
@@ -56,14 +58,18 @@ class MocapHDSDemo:
             while self.running:
                 evts = self.app.poll_next_event()
                 for evt in evts:
-                    if evt.event_type == MCPEventType.AvatarUpdated: # avatar bvh
+                    if evt.event_type == MCPEventType.AvatarUpdated: # avatar bvh(人体BVH)
                         self._handle_avatar_data(evt)
-                    elif evt.event_type == MCPEventType.AliceTrackerUpdated: # tracker
+                    elif evt.event_type == MCPEventType.AliceTrackerUpdated: # AliceTracker(追踪器)
                         self._handle_tracker_data()
-                    elif evt.event_type == MCPEventType.AliceMarkerUpdated: # marker
+                    elif evt.event_type == MCPEventType.AliceMarkerUpdated: # marker(Marker散点)
                         self._handle_marker_data()
-                    elif evt.event_type == MCPEventType.AliceRigidbodyUpdated: # AliceRigidbody
+                    elif evt.event_type == MCPEventType.AliceRigidbodyUpdated: # AliceRigidbody(刚体)
                         self._handle_rigid_body_data()
+                    elif evt.event_type == MCPEventType.TrackerUpdated: # device(道具)
+                        self._handle_device_data(evt)
+                    elif self.event_type == MCPEventType.AliceIMUUpdated: # sensor modules(惯性传感器)
+                        print('AliceIMUUpdated') # TODO: 处理惯性传感器数据
                     else:
                         print('Other events:', get_event_type_name(evt.event_type))
                 # time.sleep(0.001)
@@ -119,7 +125,22 @@ class MocapHDSDemo:
             position = joint.get_local_position()  # Get joint position
             rotation = joint.get_local_rotation()  # Get joint rotation
             print(f"avatar data : joint: {link_name}, position: {position}, rotation: {rotation}")
-   
+
+    def _handle_device_data(self, evt):
+        """
+        Handle device data
+        """
+        try:
+            device = MCPTracker(evt.event_data.tracker_handle)
+            device_name = device.get_device_name()
+            # device_count = device.get_device_count(evt.event_data.tracker_handle)
+            # px,py,pz,pname = device.get_tracker_position()
+            # qx,qy,qz,qw,qname = device.get_tracker_rotataion()
+            # print(f"device data : position: {px}, {py}, {pz}, {pname}")
+            print(f"device data : name: {device_name}")
+        except Exception as e:
+            print(f"Error handling device data: {e}")
+
     def _handle_rigid_body_data(self):
         """
         Handle rigid body data

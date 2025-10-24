@@ -4,7 +4,7 @@ from platform import *
 import time
 import os
 
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 
 architecture = machine()
 mocap_file_path = None
@@ -1034,11 +1034,11 @@ class MCPTracker(object):
         print(self.api)
         if err != MCPError.NoError:
           raise RuntimeError('Can not get MCPTracker interface: {0}'.format(MCPError._fields[err]))
-        self.handle = tracker_handle
+      self.handle = tracker_handle
 
     def get_device_name(self):
       serialNum = c_uint32(0) 
-      name = c_char_p(bytes(name, encoding='utf8'))
+      name = c_char_p()
       err = self.api.contents.GetDeviceName(pointer(serialNum), name, self.handle)
       if err != MCPError.NoError:
         raise RuntimeError('Can not get device name: {0}'.format(MCPError._fields[err]))
@@ -1067,11 +1067,11 @@ class MCPTracker(object):
       x = c_float()
       y = c_float()
       z = c_float()
-      deviceName = c_char_p()
-      err = self.api.contents.GetTrackerPosition(pointer(x), pointer(y), pointer(z), deviceName,self.handle)
+      deviceName = create_string_buffer(256)  # 创建一个足够大的缓冲区
+      err = self.api.contents.GetTrackerPosition(pointer(x), pointer(y), pointer(z), deviceName, self.handle)
       if err != MCPError.NoError:
         raise RuntimeError('Can not get tracker position:{}'.format(MCPError._fields[err]))
-      return x.value, y.value, z.value, deviceName.value   
+      return x.value, y.value, z.value, deviceName.value.decode('utf-8')   
 
     def send_message_data(self):
       message = c_char_p()
