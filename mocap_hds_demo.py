@@ -167,30 +167,29 @@ class MocapHDSDemo:
         """
         Handle IMU (Inertial Measurement Unit) data
         """
-        try:
-            alicehub = MCPAliceHub()
-            # 获取传感器模块列表
-            recv, count = alicehub.get_sensor_module_list()
-            if count > 0:
-                # 获取详细的传感器模块列表
-                recv, count1 = alicehub.get_sensor_module_list(count)
-                # 获取时间戳
-                timestamp = alicehub.get_sensor_module_timestamp()
-                print(f"IMU data count: {count}, timestamp: {timestamp}")
-                # 遍历每个传感器模块
-                for i in range(count):
-                    sensor_handle = recv[i]
-                    sensor_module = MCPSensorModule(sensor_handle)
-                    # 获取姿态数据（四元数）
-                    posture = sensor_module.get_posture()
-                    # 获取角速度数据
-                    angular_velocity = sensor_module.get_angular_velocity()
-                    # 获取加速度数据
-                    acceleration = sensor_module.get_accelerated_velocity()
-                    # 打印传感器数据
-                    print(f"IMU sensor {i}: posture: {posture}, angular velocity: {angular_velocity}, acceleration: {acceleration}")
-        except Exception as e:
-            print(f"Error handling IMU data: {e}")
+        alicehub = MCPAliceHub()
+        # 获取传感器模块列表
+        recv, count = alicehub.get_sensor_module_list()
+        if count > 0:
+            # 获取详细的传感器模块列表
+            recv, count1 = alicehub.get_sensor_module_list(count)
+            # 获取时间戳
+            timestamp = alicehub.get_sensor_module_timestamp()
+            print(f"IMU data count: {count}, timestamp: {timestamp}")
+            # 遍历每个传感器模块
+            for i in range(count):
+                sensor_handle = recv[i]
+                sensor_module = MCPSensorModule(sensor_handle)
+                sensor_id = sensor_module.get_sensor_module_id()
+                # 获取姿态数据（四元数）
+                posture = sensor_module.get_posture()
+                # 获取角速度数据
+                angular_velocity = sensor_module.get_angular_velocity()
+                # 获取加速度数据
+                acceleration = sensor_module.get_accelerated_velocity()
+                # 打印传感器数据
+                print(f"IMU sensor id {sensor_id}: posture: {posture}, angular velocity: {angular_velocity}, acceleration: {acceleration}")
+
 
     def stop(self):
         """

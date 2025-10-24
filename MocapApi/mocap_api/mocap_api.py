@@ -180,7 +180,9 @@ class MCPSensorModule(object):
       ('GetSensorModuleAngularVelocity',
        CFUNCTYPE(c_int32, POINTER(c_float), POINTER(c_float), POINTER(c_float), MCPSensorModuleHandle)),
       ('GetSensorModuleAcceleratedVelocity',
-       CFUNCTYPE(c_int32, POINTER(c_float), POINTER(c_float), POINTER(c_float), MCPSensorModuleHandle))
+       CFUNCTYPE(c_int32, POINTER(c_float), POINTER(c_float), POINTER(c_float), MCPSensorModuleHandle)),
+       ('GetSensorModuleId',
+       CFUNCTYPE(c_int32, POINTER(c_int32), MCPSensorModuleHandle))
     ]
 
   api = POINTER(MCPSensorModuleApi)()
@@ -219,6 +221,13 @@ class MCPSensorModule(object):
     if err != MCPError.NoError:
       raise RuntimeError('Can not get sensor module accelerated velocity: {0}'.format(MCPError._fields[err]))
     return x.value, y.value, z.value
+
+  def get_sensor_module_id(self):
+    sensor_id = c_int32()
+    err = self.api.contents.GetSensorModuleId(pointer(sensor_id), self.handle)
+    if err != MCPError.NoError:
+      raise RuntimeError('Can not get sensor module id: {0}'.format(err))
+    return sensor_id.value
 
 MCPBodyPartHandle = c_uint64
 
