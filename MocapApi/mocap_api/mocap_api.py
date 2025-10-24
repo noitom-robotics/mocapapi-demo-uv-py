@@ -1036,17 +1036,16 @@ class MCPTracker(object):
           raise RuntimeError('Can not get MCPTracker interface: {0}'.format(MCPError._fields[err]))
       self.handle = tracker_handle
 
-    def get_device_name(self):
-      serialNum = c_uint32(0) 
+    def get_device_name(self, serialNum):
       name = c_char_p()
       err = self.api.contents.GetDeviceName(pointer(serialNum), name, self.handle)
       if err != MCPError.NoError:
         raise RuntimeError('Can not get device name: {0}'.format(MCPError._fields[err]))
       return name.value
     
-    def get_device_count(self, tracker_handle): 
+    def get_device_count(self): 
       devCount = c_uint32(0)
-      err = self.api.contents.GetDeviceCount(pointer(devCount), tracker_handle)
+      err = self.api.contents.GetDeviceCount(pointer(devCount), self.handle)
       if err != MCPError.NoError:
         raise RuntimeError('Can not get device count: {0}'.format(MCPError._fields[err]))
       return devCount.value

@@ -68,8 +68,8 @@ class MocapHDSDemo:
                         self._handle_rigid_body_data()
                     elif evt.event_type == MCPEventType.TrackerUpdated: # device(道具)
                         self._handle_device_data(evt)
-                    elif self.event_type == MCPEventType.AliceIMUUpdated: # sensor modules(惯性传感器)
-                        print('AliceIMUUpdated') # TODO: 处理惯性传感器数据
+                    elif evt.event_type == MCPEventType.AliceIMUUpdated: # sensor modules(惯性传感器)
+                        self._handle_imu_data()
                     else:
                         print('Other events:', get_event_type_name(evt.event_type))
                 # time.sleep(0.001)
@@ -129,17 +129,20 @@ class MocapHDSDemo:
     def _handle_device_data(self, evt):
         """
         Handle device data
-        """
-        try:
-            device = MCPTracker(evt.event_data.tracker_handle)
-            device_name = device.get_device_name()
-            # device_count = device.get_device_count(evt.event_data.tracker_handle)
-            # px,py,pz,pname = device.get_tracker_position()
-            # qx,qy,qz,qw,qname = device.get_tracker_rotataion()
-            # print(f"device data : position: {px}, {py}, {pz}, {pname}")
-            print(f"device data : name: {device_name}")
-        except Exception as e:
-            print(f"Error handling device data: {e}")
+        """   
+        device = MCPTracker(evt.event_data.tracker_handle)
+        device_count = device.get_device_count()
+        if device_count > 0:
+            print(f"Device count: {device_count}")
+            for i in range(device_count):
+                # Get device name
+                device_name = device.get_device_name(i)
+                # Get device position
+                px, py, pz, pname = device.get_tracker_position()
+                # Get device rotation (quaternion)
+                qx, qy, qz, qw, qname = device.get_tracker_rotataion()
+                print(f"device data : name: {device_name}, position: {px}, {py}, {pz}, quaternion: {qx}, {qy}, {qz}, {qw}")
+
 
     def _handle_rigid_body_data(self):
         """
@@ -159,6 +162,35 @@ class MocapHDSDemo:
                 rot = right_body.get_rotation()
                 print('rigid body data : id', id,'timestamp:', timestamp, 'position:', pos, 'rotation:', rot)
 
+
+    def _handle_imu_data(self):
+        """
+        Handle IMU (Inertial Measurement Unit) data
+        """
+        try:
+            alicehub = MCPAliceHub()
+            # 获取传感器模块列表
+            recv, count = alicehub.get_sensor_module_list()
+            if count > 0:
+                # 获取详细的传感器模块列表
+                recv, count1 = alicehub.get_sensor_module_list(count)
+                # 获取时间戳
+                timestamp = alicehub.get_sensor_module_timestamp()
+                print(f"IMU data count: {count}, timestamp: {timestamp}")
+                # 遍历每个传感器模块
+                for i in range(count):
+                    sensor_handle = recv[i]
+                    sensor_module = MCPSensorModule(sensor_handle)
+                    # 获取姿态数据（四元数）
+                    posture = sensor_module.get_posture()
+                    # 获取角速度数据
+                    angular_velocity = sensor_module.get_angular_velocity()
+                    # 获取加速度数据
+                    acceleration = sensor_module.get_accelerated_velocity()
+                    # 打印传感器数据
+                    print(f"IMU sensor {i}: posture: {posture}, angular velocity: {angular_velocity}, acceleration: {acceleration}")
+        except Exception as e:
+            print(f"Error handling IMU data: {e}")
 
     def stop(self):
         """
