@@ -62,9 +62,11 @@ class MocapHDSDemo:
                         self._handle_tracker_data()
                     elif evt.event_type == MCPEventType.AliceMarkerUpdated: # marker
                         self._handle_marker_data()
+                    elif evt.event_type == MCPEventType.AliceRigidbodyUpdated: # AliceRigidbody
+                        self._handle_rigid_body_data()
                     else:
                         print('Other events:', get_event_type_name(evt.event_type))
-                time.sleep(0.001)
+                # time.sleep(0.001)
         except KeyboardInterrupt:
             print("Program interrupted by user")
         finally:
@@ -118,6 +120,25 @@ class MocapHDSDemo:
             rotation = joint.get_local_rotation()  # Get joint rotation
             print(f"avatar data : joint: {link_name}, position: {position}, rotation: {rotation}")
    
+    def _handle_rigid_body_data(self):
+        """
+        Handle rigid body data
+        """
+        alicehub = MCPAliceHub()
+        recv, count = alicehub.get_rigid_body_list()
+        if count > 0:
+            recv, count1 = alicehub.get_rigid_body_list(count)
+            timestamp = alicehub.get_rigid_body_timestamp()
+            for i in range(count):
+                right_body_handle = recv[i]
+                right_body = MCPRigidBody(right_body_handle)
+                # status = right_body.get_status()
+                id = right_body.get_id()
+                pos = right_body.get_position()
+                rot = right_body.get_rotation()
+                print('rigid body data : id', id,'timestamp:', timestamp, 'position:', pos, 'rotation:', rot)
+
+
     def stop(self):
         """
         Close Mocap application

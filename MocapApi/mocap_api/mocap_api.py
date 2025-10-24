@@ -860,8 +860,11 @@ class MCPAliceHub(object):
         else:
             if isinstance(count, int):
                 count = c_int32(count)
-                handles = (MCPRigidBodyHandle * count.value)()
-                err = self.api.contents.GetRigidBodyList(handles, byref(count))
+            handles = (MCPRigidBodyHandle * count.value)()
+            err = self.api.contents.GetRigidBodyList(handles, byref(count))
+            if err != MCPError.NoError:
+                raise RuntimeError('Get rigid body list failed with error {0}'.format(MCPError._fields.get(err, "Unknown Error")))
+            return handles, count.value
     
     def get_rigid_body_timestamp(self):
         pTimestamp = c_uint64()
