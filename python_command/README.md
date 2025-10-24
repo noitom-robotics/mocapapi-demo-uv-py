@@ -43,7 +43,7 @@
 1. 确保已安装Python 3.x环境
 2. 安装MocapApi库:
    ```bash
-   cd 3rdparty/MocapApi
+   cd MocapApi
    pip install -e .
    ```
 3. 确保动捕设备及相关软件已正确安装和配置
