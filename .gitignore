@@ -15,6 +15,7 @@ venv.bak/
 # === Build and distribution ===
 build/
 dist/
+cpp_demo/
 *.egg-info/
 .eggs/
 *.egg

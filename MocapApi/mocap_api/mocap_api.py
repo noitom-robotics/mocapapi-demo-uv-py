@@ -1032,7 +1032,7 @@ class MCPTracker(object):
             ('GetTrackerPosition', CFUNCTYPE(c_int32, POINTER(c_float),POINTER(c_float),POINTER(c_float), c_char_p, MCPTrackerHandle)),
             ('GetTrackerEulerAng', CFUNCTYPE(c_int32, POINTER(c_float),POINTER(c_float),POINTER(c_float), c_char_p, MCPTrackerHandle)),
             ('GetDeviceCount', CFUNCTYPE(c_int32, POINTER(c_uint32), MCPTrackerHandle)),
-            ('GetDeviceName', CFUNCTYPE(c_int32, c_uint32, c_char_p, MCPTrackerHandle)),
+            ('GetDeviceName', CFUNCTYPE(c_int32, c_int32, c_char_p, MCPTrackerHandle)),
         ]
 
     api = POINTER(MCPTrackerApi)()
@@ -1047,7 +1047,7 @@ class MCPTracker(object):
 
     def get_device_name(self, serialNum):
       name = c_char_p()
-      err = self.api.contents.GetDeviceName(pointer(serialNum), name, self.handle)
+      err = self.api.contents.GetDeviceName(c_int32(serialNum), name, self.handle)
       if err != MCPError.NoError:
         raise RuntimeError('Can not get device name: {0}'.format(MCPError._fields[err]))
       return name.value
