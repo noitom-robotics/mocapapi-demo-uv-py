@@ -22,14 +22,14 @@ def get_event_type_name(event_type_value):
     return event_type_map.get(event_type_value, f'Unknown({event_type_value})')
 
 
-class MocapHDSDemo:
+class MocapAxisDemo:
     """
-    Mocap Hybrid Data Server Demo class for demonstrating how to get Hybrid Data Server data through Mocap API
+    Mocap Axis Studio Demo class for demonstrating how to get Axis Studio data through Mocap API
     """
     
     def __init__(self):
         """
-        Initialize Mocap HDS Demo instance
+        Initialize Mocap Axis Studio Demo instance
         """
         self.app = None
         self.running = False  
@@ -91,6 +91,6 @@ class MocapHDSDemo:
 
 if __name__ == "__main__":
     # Create and run demo instance
-    demo = MocapHDSDemo()
-    print("Starting Mocap HDS demo...")
+    demo = MocapAxisDemo()
+    print("Starting Mocap Axis Studio demo...") 
     demo.start()
