@@ -15,7 +15,7 @@ Calculation Data 数据广播
 
 3. 选择传输协议（UDP/TCP），设置本地端口（如7012），确保与 mocap api 代码中settings.set_udp(7012)一致。​
 
-![实时广播](cacl_capture.png)
+![实时广播](img/cacl_capture.png)
 
 ### 2. 录制数据广播开启​
 
@@ -26,7 +26,7 @@ Calculation Data 数据广播
 
 3. 如需循环广播，勾选Repeat选项。
 
-![录制广播](cacl_edit.png)
+![录制广播](img/cacl_edit.png)
 
 ## 三、数据获取流程
 
@@ -92,11 +92,7 @@ except KeyboardInterrupt:
 
 * 从传感器模块中提取姿态（`posture`）、角速度（`angular_velocity`）、加速度（`accelerated_velocity`）等 Calculation Data 数据，并进行打印输出。在实际应用中，可将这些数据进一步处理，如发送给机器人控制模块、用于生物力学分析等。
 
-
-
 ## 五，传感器骨骼对应表
-
-
 
 | 名称  | 标识            | 序号  |
 | --- | ------------- | --- |

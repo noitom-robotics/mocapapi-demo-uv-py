@@ -8,7 +8,6 @@ PN-Link与其他无线惯性动捕产品不同，它提供了一种新的连接�
 
 本工程演示了如何使用python调用MocapApi sdk直连PN-Link主节点，完成上述功能。
 
-
 ## 环境准备
 
 1. 安装 Python 3.x 及以上版本。
@@ -17,10 +16,7 @@ PN-Link与其他无线惯性动捕产品不同，它提供了一种新的连接�
 
 3. PN-Link 有线套装
 
-
-   
-
-##  网络配置
+## 网络配置
 
 PN-Link主节点默认设置了固定IP：10.42.0.202，并监听UDP端口：8080
 
@@ -33,7 +29,7 @@ class MCPPnlinkCommandDemo:
     def __init__(self):
         self.app = MCPApplication()  # 创建应用实例
         settings = MCPSettings()  # 创建设置实例
-        
+
         # 配置 BVH 数据格式为二进制
         settings.set_bvh_data(MCPBvhData.Binary)
         # 启用 BVH 数据转换
@@ -43,15 +39,11 @@ class MCPPnlinkCommandDemo:
         # 配置 UDP 数据传输地址和端口
         settings.SetSettingsUDPEx('10.42.0.101', 8002)
         settings.SetSettingsUDPServer('10.42.0.202', 8080)
-        
+
         # 将设置应用到应用实例并打开连接
         self.app.set_settings(settings)
         self.app.open()
 ```
-
-
-
-
 
 ## 指令
 
@@ -72,15 +64,13 @@ class MCPPnlinkCommandDemo:
 - 等待指令执行完成 
 - 销毁指令
 
-
-
 ![command_process1](img/command_process1.png)
 
 ### 校准流程
 
 ![command_process2](img/command_process2.png)
 
-~~~python
+```python
 def handleRunning(self, commandRespond):
         # 处理校准进度句柄
         _calibrateProgressHandle = MCPCommand().get_progress(commandRespond._commandHandle)
@@ -94,7 +84,7 @@ def handleRunning(self, commandRespond):
             if i + 1 != count:
                 str_poses += ", "
         str_poses += " : "     
-        
+
         # 获取校准步骤和校准名称
         result_current_step, result_p_name = progressHandle.get_step_current_pose()
         if result_current_step == MCPCalibrateMotionProgressStep.CalibrateMotionProgressStep_Countdown:
@@ -111,13 +101,7 @@ def handleRunning(self, commandRespond):
             str_poses += (f'Calibration-Unknown({result_current_step}) is running.')
 
         print(str_poses) 
-~~~
-
-
-
-
-
-## 基类（mocap_main_base.py）
+```
 
 - 调用 mocapApi 接口的实现类
 
@@ -132,7 +116,7 @@ class MCPBase:
         self.connent_key = False  # 连接状态标识
         self.app = MCPApplication()  # 创建应用实例
         settings = MCPSettings()  # 创建设置实例
-        
+
         # 配置 BVH 数据格式为二进制
         settings.set_bvh_data(MCPBvhData.Binary)
         # 启用 BVH 数据转换
@@ -142,7 +126,7 @@ class MCPBase:
         # 配置 UDP 数据传输地址和端口
         settings.SetSettingsUDPEx('10.42.0.101', 8002)
         settings.SetSettingsUDPServer('10.42.0.202', 8080)
-        
+
         # 将设置应用到应用实例并打开连接
         self.app.set_settings(settings)
         self.app.open()
@@ -241,7 +225,7 @@ class MCPBase:
             if i + 1 != count:
                 str_poses += ", "
         str_poses += " : "     
-        
+
         # 获取校准步骤和校准名称
         result_current_step, result_p_name = progressHandle.get_step_current_pose()
         if result_current_step == MCPCalibrateMotionProgressStep.CalibrateMotionProgressStep_Countdown:
@@ -325,7 +309,7 @@ class MCPBase:
             await loop.run_in_executor(None, listener.join)  # 等待监听器退出
 ```
 
-## 处理PN-Link数据并打印（mocap_main.py）
+## 处理PN-Link数据并打印
 
 - 从PN-Link获取数据,并打印数据信息
 
