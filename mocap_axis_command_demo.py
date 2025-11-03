@@ -1,23 +1,32 @@
 import sys
-sys.path.append(r'./3rdparty/MocapApi')
+sys.path.append(r'./MocapApi')
 
 import asyncio
-import multiprocessing
 import logging
 import threading
+
+from enum import Enum
+from pynput.keyboard import Listener
 from mocap_api import *
-from config import *
 
 # Set up logging format
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+class MsgType(Enum):
+    START = 1
+    STOP = 2
+    RUN_COMMAND = 3
+    STATUS = 4
+    ERROR = 5
+    DATA = 6
+    CONNENT_SUCCESS = 7
+    SUCCESS = 11
 
-class MCPControl:
-    def __init__(self, msg_queue: multiprocessing.Queue = None):
+class MCPAxisCommandDemo:
+    def __init__(self):
         # Initialize current command and running state
         self.current_command = -1  # Current command being executed
         self.connent_key = False   # Connection state flag
-        self.msg_queue = msg_queue # Message queue
         self._running = False      # Running flag
         
         # Create application instance and settings
@@ -25,8 +34,8 @@ class MCPControl:
         settings = MCPSettings()
         
         settings.set_bvh_rotation(MCPBvhRotation.XYZ)
-        settings.SetSettingsUDPEx(CLIENT_IP, CLIENT_PORT)
-        settings.SetSettingsUDPServer(SERVER_IP, SERVER_PORT)
+        settings.SetSettingsUDPEx('10.42.0.101', 8002)
+        settings.SetSettingsUDPServer('10.42.0.202', 8080)
         self.app.set_settings(settings)
         self.app.open()
 
@@ -48,21 +57,18 @@ class MCPControl:
                 self.loop = None
                 self.task = None
                 self.thread = None
-                self.msg_queue.put((MsgType.STATUS, f"POSE thread exited"))
+                self._send_message(MsgType.STATUS, f"UDP thread exited")
 
         self.thread = threading.Thread(target=run_udp_loop, daemon=True)
         self.thread.start()
-        self.msg_queue.put((MsgType.STATUS, f"POSE thread started"))        
+        self._send_message(MsgType.STATUS, f"UDP thread started")        
     def _send_message(self, msg_type, message):
         # print(f"{msg_type}: {message}")
-        """Send message to message queue"""
-        if self.msg_queue:
-            self.msg_queue.put((msg_type, message))
+        if msg_type == MsgType.ERROR:
+            logging.error(message)
         else:
-            if msg_type == MsgType.ERROR:
-                logging.error(message)
-            else:
-                logging.info(message)
+            logging.info(message)
+
     def get_current_command_title(self):
         # Return the title corresponding to the current command
         if self.current_command == EMCPCommand.CommandStartRecored:
@@ -96,6 +102,7 @@ class MCPControl:
             mcpSystem = MCPSystem(notifyData._notifyHandle)  # Get system information
             self._send_message(MsgType.STATUS, f'MasterInfo : ( Version : {mcpSystem.get_master_version()}, SerialNumber : {mcpSystem.get_master_serial_number()} )')
             self._send_message(MsgType.CONNENT_SUCCESS, 'Connected.')
+
     def handleResult(self, commandRespond):
         # Handle command result
         command = MCPCommand()
@@ -158,3 +165,47 @@ class MCPControl:
         """Safely stop all operations"""
         self._running = False
         self.app.close()
+
+    def handleAvatar(self, avatar_handle):
+        # Handle avatar update event
+        avatar = MCPAvatar(avatar_handle)  # Get avatar data
+        joints = avatar.get_joints()  # Get all joint data
+        str_data = '{'
+        for joint in joints:
+            link_name = joint.get_name()  # Get joint name
+            position = joint.get_local_position()  # Get joint position
+            rotation = joint.get_local_rotation()  # Get joint rotation
+            str_data += f'{link_name} : {position}, {rotation}'
+        str_data += '}'
+        print(f"links_data: {str_data}")  # Print joint data
+
+    async def main_async(self):
+        # Main asynchronous function
+        main = self
+        loop = asyncio.get_event_loop()
+
+        # Keyboard event handler function
+        def on_key_press(key):
+            try:
+                key_name = key.char.lower()
+                print(f"Key pressed: {key_name}")
+                if key_name == 's':
+                    main.running_command(EMCPCommand.CommandStartRecord)
+                elif key_name == 'p':
+                    main.running_command(EMCPCommand.CommandStopRecord) 
+            except AttributeError:
+                if key == key.esc:
+                    print("ESC key pressed, exiting program")
+                    return False  # Exit listener
+
+        # Start keyboard listener
+        with Listener(on_press=on_key_press) as listener:
+            asyncio.run_coroutine_threadsafe(main.udp_listener_loop(), loop)  # Start event update
+            print("Press S to Start Record,  P to Stop Record,press ESC to exit program")
+            await loop.run_in_executor(None, listener.join)  # Wait for listener to exit
+
+    def main(self):
+        asyncio.run(self.main_async())
+
+if __name__ == '__main__':
+    MCPAxisCommandDemo().main()       
