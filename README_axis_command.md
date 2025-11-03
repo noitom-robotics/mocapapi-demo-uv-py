@@ -61,8 +61,8 @@
 在[mocap_axis_command_demo.py](mocap_axis_command_demo.py)文件中配置以下网络参数:
 
 ```python
-settings.SetSettingsUDPEx('10.10.20.101', 7003)  # 客户端IP和端口
-settings.SetSettingsUDPServer('10.10.20.111', 7012)  # 服务端IP和端口
+settings.SetSettingsUDPEx('10.0.6.51', 7003)  # 客户端IP和端口
+settings.SetSettingsUDPServer('10.0.4.53', 7012)  # 服务端IP和端口
 ```
 
 请根据实际网络环境修改这些IP地址和端口号。

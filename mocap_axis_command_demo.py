@@ -55,8 +55,8 @@ class MCPAxisCommandDemo:
         settings = MCPSettings()
         
         settings.set_bvh_rotation(MCPBvhRotation.XYZ)
-        settings.SetSettingsUDPEx('10.42.0.101', 8002)
-        settings.SetSettingsUDPServer('10.42.0.202', 8080)
+        settings.SetSettingsUDPEx('10.0.6.51', 7003)  # 客户端IP和端口
+        settings.SetSettingsUDPServer('10.0.4.53', 7012)  # 服务端IP和端口
         self.app.set_settings(settings)
         self.app.open()
 
@@ -177,7 +177,7 @@ class MCPAxisCommandDemo:
                             self.handleResult(evt.event_data.commandRespond)
                     else:
                         print('Other events:', get_event_type_name(evt.event_type))
-                        
+
                 await asyncio.sleep(0.001)  # Wait 0.1 seconds
         except Exception as e:
             self._send_message(MsgType.ERROR, f"An error occurred: {e}")
