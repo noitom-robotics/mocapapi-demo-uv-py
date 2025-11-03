@@ -18,8 +18,8 @@ class MCPAxisCommandDemo:
         # Set rotation order to YZX
         settings.set_bvh_rotation(MCPBvhRotation.YXZ)
         # Configure UDP data transmission address and port
-        settings.SetSettingsUDPEx('10.0.6.51', 7003)
-        settings.SetSettingsUDPServer('10.0.6.51', 7012)
+        settings.SetSettingsUDPEx('10.0.6.51', 7012)
+        settings.SetSettingsUDPServer('10.0.6.51', 7003)
         
         # Apply configuration to application instance and open connection
         self.app.set_settings(settings)
