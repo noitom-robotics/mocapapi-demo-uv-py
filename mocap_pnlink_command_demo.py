@@ -2,6 +2,27 @@ import asyncio
 from pynput.keyboard import Listener
 from mocap_api import *
 
+def get_event_type_name(event_type_value):
+    """
+    Convert event type value to corresponding enum name
+    
+    Args:
+        event_type_value: The numeric event type value
+        
+    Returns:
+        str: The corresponding event type name
+    """
+    event_type_map = {
+        MCPEventType.InvalidEvent: 'InvalidEvent',
+        MCPEventType.AvatarUpdated: 'AvatarUpdated',
+        MCPEventType.TrackerUpdated: 'TrackerUpdated',
+        MCPEventType.AliceIMUUpdated: 'AliceIMUUpdated',
+        MCPEventType.AliceRigidbodyUpdated: 'AliceRigidbodyUpdated',  
+        MCPEventType.AliceTrackerUpdated: 'AliceTrackerUpdated',
+        MCPEventType.AliceMarkerUpdated: 'AliceMarkerUpdated',
+    }
+    return event_type_map.get(event_type_value, f'Unknown({event_type_value})')
+
 class MCPPnlinkCommandDemo:
     def __init__(self):
         # Initialize current command and running command status
@@ -142,8 +163,8 @@ class MCPPnlinkCommandDemo:
                             self.handleRunning(evt.event_data.commandRespond)
                         elif evt.event_data.commandRespond._replay == MCPReplay.MCPReplay_Result:
                             self.handleResult(evt.event_data.commandRespond)
-                    elif evt.event_type == MCPEventType.RigidBodyUpdated:
-                        print('rigid body updated')
+                    else:
+                        print('Other events:', get_event_type_name(evt.event_type))
                 await asyncio.sleep(0.1)  # Wait for 0.1 seconds
         except Exception as e:
             print(f"An error occurred: {e}")    

@@ -22,6 +22,27 @@ class MsgType(Enum):
     CONNENT_SUCCESS = 7
     SUCCESS = 11
 
+def get_event_type_name(event_type_value):
+    """
+    Convert event type value to corresponding enum name
+    
+    Args:
+        event_type_value: The numeric event type value
+        
+    Returns:
+        str: The corresponding event type name
+    """
+    event_type_map = {
+        MCPEventType.InvalidEvent: 'InvalidEvent',
+        MCPEventType.AvatarUpdated: 'AvatarUpdated',
+        MCPEventType.TrackerUpdated: 'TrackerUpdated',
+        MCPEventType.AliceIMUUpdated: 'AliceIMUUpdated',
+        MCPEventType.AliceRigidbodyUpdated: 'AliceRigidbodyUpdated',  
+        MCPEventType.AliceTrackerUpdated: 'AliceTrackerUpdated',
+        MCPEventType.AliceMarkerUpdated: 'AliceMarkerUpdated',
+    }
+    return event_type_map.get(event_type_value, f'Unknown({event_type_value})')
+
 class MCPAxisCommandDemo:
     def __init__(self):
         # Initialize current command and running state
@@ -154,8 +175,9 @@ class MCPAxisCommandDemo:
                             self._send_message(MsgType.STATUS, 'MCPReplay_Running')
                         elif evt.event_data.commandRespond._replay == MCPReplay.MCPReplay_Result:
                             self.handleResult(evt.event_data.commandRespond)
-                    elif evt.event_type == MCPEventType.RigidBodyUpdated:
-                        self._send_message(MsgType.STATUS, 'rigid body updated')
+                    else:
+                        print('Other events:', get_event_type_name(evt.event_type))
+                        
                 await asyncio.sleep(0.001)  # Wait 0.1 seconds
         except Exception as e:
             self._send_message(MsgType.ERROR, f"An error occurred: {e}")
@@ -190,9 +212,9 @@ class MCPAxisCommandDemo:
                 key_name = key.char.lower()
                 print(f"Key pressed: {key_name}")
                 if key_name == 's':
-                    main.running_command(EMCPCommand.CommandStartRecord)
+                    main.running_command(EMCPCommand.CommandStartRecored)
                 elif key_name == 'p':
-                    main.running_command(EMCPCommand.CommandStopRecord) 
+                    main.running_command(EMCPCommand.CommandStopRecored) 
             except AttributeError:
                 if key == key.esc:
                     print("ESC key pressed, exiting program")
