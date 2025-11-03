@@ -16,6 +16,7 @@ venv.bak/
 build/
 dist/
 cpp_demo/
+python_webui/
 *.egg-info/
 .eggs/
 *.egg
