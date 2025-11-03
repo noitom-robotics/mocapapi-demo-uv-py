@@ -1,5 +1,8 @@
 import asyncio
-from pynput.keyboard import Listener
+import threading
+import time
+import select
+import sys
 from mocap_api import *
 
 class MCPAxisCommandDemo:
@@ -18,8 +21,8 @@ class MCPAxisCommandDemo:
         # Set rotation order to YZX
         settings.set_bvh_rotation(MCPBvhRotation.YXZ)
         # Configure UDP data transmission address and port
-        settings.SetSettingsUDPEx('10.0.6.51', 7003)
-        settings.SetSettingsUDPServer('10.0.6.51', 7012)
+        settings.SetSettingsUDPEx('10.0.4.53', 7012)
+        settings.SetSettingsUDPServer('10.0.6.51', 7003)
         
         # Apply configuration to application instance and open connection
         self.app.set_settings(settings)
@@ -97,29 +100,58 @@ class MCPAxisCommandDemo:
         # Main asynchronous function
         main = self
         loop = asyncio.get_event_loop()
-
-        # Keyboard event handler function
-        def on_key_press(key):
-            try:
-                key_name = key.char.lower()
-                print(f"Key pressed: {key_name}")
-                if key_name == 'r':
-                    main.running_command(EMCPCommand.CommandStartRecored)
-                elif key_name == 's':
-                    main.running_command(EMCPCommand.CommandStopRecored)
-            except AttributeError:
-                if key == key.esc:
-                    print("ESC key pressed, exiting program")
-                    return False  # Exit listener
-
-        # Start keyboard listener
-        with Listener(on_press=on_key_press) as listener:
-            asyncio.run_coroutine_threadsafe(main.update(), loop)  # Start event update
-            print("Press R to Start Record, S to Stop Record, ESC to exit program")
-            await loop.run_in_executor(None, listener.join)  # Wait for listener to exit
+        
+        # Create a flag to control the input thread
+        stop_event = threading.Event()
+        
+        # Input handling function
+        def handle_input():
+            print("Press R to Start Record, S to Stop Record, Q to exit program")
+            while not stop_event.is_set():
+                try:
+                    # Check if input is available
+                    if sys.stdin in select.select([sys.stdin], [], [], 0.1)[0]:
+                        key = sys.stdin.readline().strip().lower()
+                        if key == 'r':
+                            print("R key pressed")
+                            main.running_command(EMCPCommand.CommandStartRecored)
+                        elif key == 's':
+                            print("S key pressed")
+                            main.running_command(EMCPCommand.CommandStopRecored)
+                        elif key == 'q':
+                            print("Q key pressed, exiting program")
+                            stop_event.set()
+                            break
+                except Exception as e:
+                    print(f"Input error: {e}")
+                    break
+                
+                # Small sleep to prevent high CPU usage
+                time.sleep(0.1)
+        
+        # Start the input handling thread
+        input_thread = threading.Thread(target=handle_input)
+        input_thread.daemon = True
+        input_thread.start()
+        
+        # Start event update
+        update_task = asyncio.create_task(main.update())
+        
+        # Wait until stop event is set
+        while not stop_event.is_set():
+            await asyncio.sleep(0.1)
+        
+        # Cancel the update task when exiting
+        update_task.cancel()
+        try:
+            await update_task
+        except asyncio.CancelledError:
+            pass
+        
+        print("Program exited")
 
     def main(self):
         asyncio.run(self.main_async())
 
 if __name__ == '__main__':
-    MCPAxisCommandDemo().main()        
+    MCPAxisCommandDemo().main()
