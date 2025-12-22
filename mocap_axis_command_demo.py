@@ -18,12 +18,15 @@ class MCPAxisCommandDemo:
         # Set rotation order to YZX
         settings.set_bvh_rotation(MCPBvhRotation.YXZ)
         # Configure UDP data transmission address and port
-        settings.SetSettingsUDPEx('10.0.6.51', 7012)
-        settings.SetSettingsUDPServer('10.0.6.51', 7003)
+        settings.SetSettingsUDPEx('127.0.0.1', 7012)
+        settings.SetSettingsUDPServer('127.0.0.1', 7003)
         
         # Apply configuration to application instance and open connection
         self.app.set_settings(settings)
         self.app.open()
+        
+        # 录制任务名称，默认为空
+        self.take_name = ""
 
     def get_current_command_title(self):
         # Return the title corresponding to the current command
@@ -51,8 +54,14 @@ class MCPAxisCommandDemo:
 
     def running_command(self, running_command):
         # Execute the specified command
-        if self.check_current_command(running_command) == True:            
-            self.app.queue_command(running_command)  # Execute command
+        if self.check_current_command(running_command) == True: 
+            if running_command == EMCPCommand.CommandStartRecored:
+                # 使用录制任务名称，如果为空则使用默认名称
+                take_name = self.take_name if self.take_name else "test"
+                self.app.queue_command_with_extra_long(running_command, take_name)  # Execute command with take name
+            elif running_command == EMCPCommand.CommandStopRecored:
+                self.app.queue_command(running_command)  # Execute command
+            
             self.current_command = running_command  # Update current command
             print(f'Pending command {self.get_current_command_title()} is running.')
 
@@ -107,6 +116,10 @@ class MCPAxisCommandDemo:
                     main.running_command(EMCPCommand.CommandStartRecored)
                 elif key_name == 's':
                     main.running_command(EMCPCommand.CommandStopRecored)
+                elif key_name == 'n':
+                    # 设置录制任务名称
+                    main.take_name = input("请输入录制任务名称: ")
+                    print(f"录制任务名称已设置为: {main.take_name}")
             except AttributeError:
                 if key == key.esc:
                     print("ESC key pressed, exiting program")
@@ -115,7 +128,7 @@ class MCPAxisCommandDemo:
         # Start keyboard listener
         with Listener(on_press=on_key_press) as listener:
             asyncio.run_coroutine_threadsafe(main.update(), loop)  # Start event update
-            print("Press R to Start Record, S to Stop Record, ESC to exit program")
+            print("Press N to Set Record Name, R to Start Record, S to Stop Record, ESC to exit program")
             await loop.run_in_executor(None, listener.join)  # Wait for listener to exit
 
     def main(self):
