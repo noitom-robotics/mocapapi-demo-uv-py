@@ -443,7 +443,7 @@ class WebControlPanel:
             url_path='/res',
             local_directory=os.path.join(os.getcwd(), 'web/res')
         )        
-        ui.run(title='PN-Link设置面板V1.1.0', dark=False, reload=False)
+        ui.run(title='PN-Link设置面板V1.1.0', dark=False, reload=False, port=8081)
         
         
     def cleanup(self):
