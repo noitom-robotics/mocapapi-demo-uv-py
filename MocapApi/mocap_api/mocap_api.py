@@ -659,7 +659,7 @@ class MCPCommand(object):
         _fields_ = [
             ('CreateCommand', CFUNCTYPE(c_int32, c_int32, POINTER(MCPCommandHandle))),
             ('SetCommandExtraFlags', CFUNCTYPE(c_int32, c_int32, POINTER(MCPCommandHandle))),
-            ('SetCommandExtraLong', CFUNCTYPE(c_int32, POINTER(c_uint64), POINTER(MCPCommandHandle))),
+            ('SetCommandExtraLong', CFUNCTYPE(c_int32, c_int, c_uint64, MCPCommandHandle)),
             ('GetCommandResultMessage', CFUNCTYPE(c_int32, POINTER(c_char_p), MCPCommandHandle)),
             ('GetCommandResultCode', CFUNCTYPE(c_int32, POINTER(c_uint32), MCPCommandHandle)),
             ('GetCommandProgress', CFUNCTYPE(c_int32, c_int32,  POINTER(c_ulonglong), MCPCommandHandle)),
@@ -677,10 +677,25 @@ class MCPCommand(object):
         if err != MCPError.NoError:
             raise RuntimeError('CreateCommand failed with error {0}'.format(MCPError._fields[err])) 
           
-    def set_command_extra_long(self, commandType):
-        # Convert commandType to LP_c_ulonglong
-        c_commandType = c_ulonglong(commandType)
-        err = self.api.contents.SetCommandExtraLong(byref(c_commandType), byref(self.handle))
+    def set_command_extra_long(self, data=0):
+        # 保存缓冲区引用，防止垃圾回收
+        self._buffer = None
+        
+        if isinstance(data, str):
+            # Convert string to bytes
+            data_bytes = data.encode('utf-8')
+            # Create a buffer to hold the bytes
+            data_buffer = create_string_buffer(data_bytes)
+            # 保存缓冲区引用
+            self._buffer = data_buffer
+            # Get the pointer to the buffer
+            # 使用cast将缓冲区转换为POINTER(c_char)，然后获取其地址
+            data_ptr = c_uint64(addressof(data_buffer))
+        else:
+            # If data is not a numeric value, convert it to integer first
+            data_ptr = c_uint64(int(data))
+        
+        err = self.api.contents.SetCommandExtraLong(c_int(0), data_ptr, self.handle)# 0 is CommandExtraLong_Extra0
         if err != MCPError.NoError:
             raise RuntimeError('SetCommandExtraLong failed with error {0}'.format(MCPError._fields[err]))     
 
@@ -1521,10 +1536,11 @@ class MCPApplication(object):
     if err != MCPError.NoError:
       raise RuntimeError('Can not queued server command: {0}'.format(MCPError._fields[err]))
 
-  def queue_command1(self, cmd_type):
+  def queue_command_with_extra_long(self, cmd_type, extra_long):
     cmd = MCPCommand()
     cmd.create_command(cmd_type)  # 先创建命令初始化句柄
-    cmd.set_command_extra_long(cmd_type)
+    # 根据C++实现，使用CommandExtraLong_Extra0（值为0）作为commandType
+    cmd.set_command_extra_long(extra_long)  # 0 is CommandExtraLong_Extra0
     err = self.api.contents.QueuedServerCommand(cmd.handle, self._handle)
     if err != MCPError.NoError:
       raise RuntimeError('Can not queued server command: {0}'.format(MCPError._fields[err]))    
