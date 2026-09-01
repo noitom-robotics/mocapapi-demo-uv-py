@@ -16,7 +16,11 @@ venv.bak/
 build/
 dist/
 cpp_demo/
-python_webui/
+python_webui/*
+!python_webui/.python-version
+!python_webui/pyproject.toml
+!python_webui/uv.lock
+.tools/
 *.egg-info/
 .eggs/
 *.egg

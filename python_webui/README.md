@@ -10,74 +10,48 @@ PN‑Link 是诺亦腾公司推出的全身有线惯性动作捕捉产品，其�
 
 ## 二、环境要求
 运行本工程需满足以下环境条件：
-- 编程语言：**Python 3.8 ~ 3.11**（本工程依赖 `nicegui==2.24.1`，不支持 Python3.12及以上版本）
-- 依赖库：需安装`nicegui`（指定版本`nicegui==2.24.1`）
+- Python：**3.8 ~ 3.11**（项目固定使用 Python 3.11；`nicegui==2.24.1` 不支持 Python 3.12 及以上版本）
+- 项目管理工具：[uv](https://docs.astral.sh/uv/)
 - 浏览器：需支持 OpenGL 的现代浏览器（如 Chrome、Microsoft Edge 等）
 - 硬件设备：PN‑Link 有线动捕套装
 
-> ⚠️ 系统自带高版本Python（Ubuntu23+/Debian12+）会出现`externally‑managed‑environment`保护报错，**必须使用Python虚拟环境运行工程，禁止直接使用系统pip安装库**。
+> uv 会根据 `.python-version` 自动准备 Python 3.11，并在项目目录创建和维护 `.venv`，无需手工创建或激活虚拟环境。
 
-## 二‑1、虚拟环境部署步骤（Ubuntu/Debian系统）
-> 适用于Ubuntu新版系统，系统默认Python版本高于3.11的场景，需要安装Python3.11，使用虚拟环境隔离依赖。
+## 二‑1、使用 uv 部署
 
-1. 添加多版本Python软件源deadsnakes
+1. 安装 uv
+
+Linux/macOS：
+
 ```bash
-sudo apt update
-sudo apt install software-properties-common -y
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt update
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-2. 安装 Python3.11 以及虚拟环境工具
+Windows PowerShell：
 
-```
-sudo apt install python3.11 python3.11-venv -y
-```
-
-3. 进入工程`mocapapi-demo-py`项目目录
-
-```
-cd ~/mocapapi-demo-py
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-4. 创建基于 Python3.11 的虚拟环境
+安装完成后确认版本：
 
-```
-python3.11 -m venv venv
-```
-
-5. **激活虚拟环境**
-
-```
-source venv/bin/activate
+```bash
+uv --version
 ```
 
-> 
-> ✅激活成功标识：终端命令行前缀会出现 `(venv)`，代表当前已经进入隔离的 Python 环境。
-> 每次新开终端运行本项目，**都必须先执行激活命令**。
-> 退出虚拟环境命令：`deactivate`
+2. 进入 WebUI 项目目录
 
-6. 在虚拟环境内安装项目依赖 nicegui==2.24.1（国内清华镜像加速）
-
-```
-pip install nicegui==2.24.1 -i https://pypi.tuna.tsinghua.edu.cn/simple
+```bash
+cd mocapapi-demo-py/python_webui
 ```
 
-> 
-> 校验安装版本：
+3. 同步项目环境
 
-```
-pip show nicegui
-```
-
-确认 Version 字段为 `2.24.1`。
-
-7. 在虚拟环境内安装项目依赖 MocapApi
-```
-cd MocapApi
-pip install -e .
+```bash
+uv sync
 ```
 
+uv 会读取 `pyproject.toml` 和 `uv.lock`，自动安装 Python 3.11、`nicegui==2.24.1` 以及上级目录中的本地 `MocapApi` 包。
 
 ## 三、网络配置
 
@@ -142,20 +116,15 @@ class MCPControl:
 cd python_webui
 ```
 
-> 
-> ⚠️重要：**务必先激活虚拟环境**，看到命令行前缀`(venv)`再继续
-
-```
-source venv/bin/activate
-```
-
 2. 启动 Web 服务器：
 
 ```
-python web_ui.py
+uv run web_ui.py
 ```
 
-3. 打开浏览器，访问地址：[http://localhost:8080](http://localhost:8080/)
+`uv run` 会在启动前自动检查并同步项目环境，无需激活 `.venv`。首次运行需要下载 Python 和项目依赖，耗时会稍长。
+
+3. 打开浏览器，访问地址：[http://localhost:8081](http://localhost:8081/)
 
 ## 五、指令说明
 
@@ -185,7 +154,7 @@ python web_ui.py
 ### 1. 连接 PN‑Link 设备
 
 1. 确保主机与 PN‑Link 主节点网络配置正确（同网段）
-2. 打开浏览器访问[http://localhost:8080](http://localhost:8080/)
+2. 打开浏览器访问[http://localhost:8081](http://localhost:8081/)
 3. 状态栏显示为**绿色 “已连接”**，表示连接成功
 
 ### 2. 开始捕捉（Start Capture）
@@ -248,13 +217,13 @@ python web_ui.py
 
 > 
 > 原因：直接使用系统 Python 的 pip 安装库，系统安全机制拦截。
-> 解决：**必须使用上面文档的虚拟环境步骤，进入`(venv)`环境再执行 pip 与运行脚本，不要直接系统 pip。**
+> 解决：不要使用系统 pip，进入 `python_webui` 目录后执行 `uv sync`，再使用 `uv run web_ui.py` 启动。
 
 ### 4. `pkgutil` 属性找不到 AttributeError
 
 > 
 > 原因：使用高于 3.11 版本 Python 运行本项目，nicegui2.24.1 不兼容高版本 Python。
-> 解决：确认虚拟环境是 python3.11，`python --version`查看版本，重建虚拟环境。
+> 解决：执行 `uv run python --version` 确认版本。若不是 Python 3.11，执行 `uv sync --python 3.11 --reinstall` 重建项目环境。
 
 ## 八、系统关闭
 
@@ -263,4 +232,3 @@ python web_ui.py
 1. 点击 “Stop Capture” 按钮停止动作捕捉
 2. 关闭 Web 浏览器
 3. 在终端按`Ctrl+C`停止 Web 服务器
-4. （可选）输入`deactivate`退出虚拟环境

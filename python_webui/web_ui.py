@@ -456,7 +456,7 @@ class WebControlPanel:
             self.mocap_process.terminate()
             self.mocap_process.join(timeout=1.0)
 
-if __name__ in {"__main__", "__mp_main__"}:
+if __name__ == "__main__":
     # 确保多进程在Windows上也能正常工作
     multiprocessing.freeze_support()
     
