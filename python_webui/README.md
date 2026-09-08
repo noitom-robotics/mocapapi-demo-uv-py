@@ -1,234 +1,360 @@
-```
-# PN‑Link Python操作文档
-## 一、产品与工程介绍
-### 关于 PN‑Link
-PN‑Link 是诺亦腾公司推出的全身有线惯性动作捕捉产品，其工作原理为：身体各子节点的数据通过有线方式汇总至背部主节点，最终经网络传输至上位机。
-相较于其他无线惯性动捕产品，PN‑Link 的核心优势在于支持**直连模式**：无需安装诺亦腾上位机软件 Axis Studio，可通过 MocapApi SDK 直接连接主节点，完成数据采集、人体姿态校准等核心操作。
+# PN-Link Python 操作指南
 
-### 关于本工程
-本工程演示了如何通过 Python WebUI 调用 MocapApi SDK 直连 PN‑Link 主节点，实现上述数据采集、姿态校准等功能，为开发者提供直观的操作示例。
+本文介绍如何通过 Python WebUI 调用 MocapApi SDK，直连 PN-Link 主节点，完成动作数据采集、人体姿态校准和数据可视化。
 
-## 二、环境要求
-运行本工程需满足以下环境条件：
-- Python：**3.8 ~ 3.11**（项目固定使用 Python 3.11；`nicegui==2.24.1` 不支持 Python 3.12 及以上版本）
-- 项目管理工具：[uv](https://docs.astral.sh/uv/)
-- 浏览器：需支持 OpenGL 的现代浏览器（如 Chrome、Microsoft Edge 等）
-- 硬件设备：PN‑Link 有线动捕套装
+## 目录
 
-> uv 会根据 `.python-version` 自动准备 Python 3.11，并在项目目录创建和维护 `.venv`，无需手工创建或激活虚拟环境。
+- [1. 产品与工程概述](#1-产品与工程概述)
+- [2. 快速开始](#2-快速开始)
+- [3. 环境与依赖](#3-环境与依赖)
+- [4. 网络配置](#4-网络配置)
+- [5. 启动 Web 服务](#5-启动-web-服务)
+- [6. 设备操作](#6-设备操作)
+- [7. 指令调用说明](#7-指令调用说明)
+- [8. 常见问题](#8-常见问题)
+- [9. 安全退出](#9-安全退出)
 
-## 二‑1、使用 uv 部署
+## 1. 产品与工程概述
 
-1. 安装 uv
+### 1.1 PN-Link
 
-Linux/macOS：
+PN-Link 是诺亦腾推出的全身有线惯性动作捕捉产品。各身体子节点通过有线方式将数据汇总至背部主节点，再由主节点通过网络传输至主机。
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+与无线惯性动作捕捉产品相比，PN-Link 支持直连模式：无需安装 Axis Studio，即可通过 MocapApi SDK 直接连接主节点，完成数据采集和人体姿态校准等操作。
 
-Windows PowerShell：
+### 1.2 示例工程
 
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
+本工程通过 Python WebUI 演示以下功能：
 
-安装完成后确认版本：
+- 连接 PN-Link 主节点
+- 开始和停止动作捕捉
+- 执行人体姿态校准
+- 输出 3D 骨骼数据或关节数据
+- 在浏览器中实时显示 3D 动作
+- 调整 PN-Link 网络与数据参数
 
-```bash
-uv --version
-```
+## 2. 快速开始
 
-2. 进入 WebUI 项目目录
+以下命令假设工程目录为 `~/mocapapi-demo-py`，且 `MocapApi` 与 `python_webui` 均位于工程根目录下。若实际目录结构不同，请相应调整路径。
 
 ```bash
-cd mocapapi-demo-py/python_webui
+cd ~/mocapapi-demo-py
+
+# 创建并激活 Python 3.11 虚拟环境
+python3.11 -m venv venv
+source venv/bin/activate
+
+# 安装依赖
+python -m pip install --upgrade pip
+python -m pip install nicegui==2.24.1
+python -m pip install -e ./MocapApi
+
+# 启动 Web 服务
+cd python_webui
+python web_ui.py
 ```
 
-3. 同步项目环境
+启动成功后，在浏览器中访问 [http://localhost:8080](http://localhost:8080/)。
+
+> 每次打开新终端运行本工程前，都需要先进入工程根目录并执行 `source venv/bin/activate`。
+
+## 3. 环境与依赖
+
+### 3.1 环境要求
+
+| 项目 | 要求 |
+| --- | --- |
+| Python | 建议使用 Python 3.8 至 3.11；本文以 Python 3.11 为例 |
+| NiceGUI | `nicegui==2.24.1` |
+| 浏览器 | 支持 WebGL 的现代浏览器，如 Chrome 或 Microsoft Edge |
+| 硬件 | PN-Link 有线动作捕捉套装 |
+
+> Python 3.12 及以上版本未在本文对应工程中确认兼容性。若出现依赖错误，建议改用 Python 3.11 创建虚拟环境后重试。
+
+### 3.2 使用虚拟环境
+
+Ubuntu、Debian 等 Linux 发行版可能限制直接向系统 Python 安装第三方包，并提示 `externally-managed-environment`。为避免污染系统环境，本工程应在虚拟环境中安装和运行。
+
+创建虚拟环境：
 
 ```bash
-uv sync
+cd ~/mocapapi-demo-py
+python3.11 -m venv venv
 ```
 
-uv 会读取 `pyproject.toml` 和 `uv.lock`，自动安装 Python 3.11、`nicegui==2.24.1` 以及上级目录中的本地 `MocapApi` 包。
+激活虚拟环境：
 
-## 三、网络配置
-
-### 基础配置说明
-
-PN‑Link 主节点默认参数如下：
-
-- 固定 IP：`10.42.0.202`
-- 监听 UDP 端口：`8080`
-
-**主机配置要求**：需将运行工程脚本的机器 IP 设置为同网段（如`10.42.0.101`），确保设备与主机处于同一局域网。
-
-### 核心网络参数
-
-表格
-
-| 角色 | 默认 IP 地址 | 默认 UDP 端口 |
-| --- | --- | --- |
-| 客户端（主机） | `10.42.0.101` | `8002` |
-| 服务器（主节点） | `10.42.0.202` | `8080` |
-
-### 配置修改方式
-
-- 旋转顺序默认设为 XYZ，如需调整可通过配置文件修改
-- IP 地址、端口等参数可通过修改`web_config.py`文件调整，关键配置如下：
-
+```bash
+source venv/bin/activate
 ```
+
+激活后，终端提示符通常会出现 `(venv)` 前缀。退出虚拟环境时执行：
+
+```bash
+deactivate
+```
+
+### 3.3 安装 Python 3.11
+
+#### Ubuntu
+
+如果当前 Ubuntu 软件源未提供 Python 3.11，可使用 deadsnakes PPA：
+
+```bash
+sudo apt update
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.11 python3.11-venv -y
+```
+
+> deadsnakes PPA 面向 Ubuntu，不适用于 Debian。
+
+#### Debian
+
+优先使用 Debian 官方软件源提供的 Python 和 `venv` 组件：
+
+```bash
+sudo apt update
+sudo apt install python3 python3-venv -y
+python3 --version
+```
+
+如果系统提供的 Python 版本不在本工程建议范围内，请通过适合当前 Debian 版本的方式单独安装 Python 3.11，再使用该解释器创建虚拟环境。
+
+### 3.4 安装工程依赖
+
+在工程根目录执行：
+
+```bash
+source venv/bin/activate
+python -m pip install nicegui==2.24.1
+python -m pip install -e ./MocapApi
+```
+
+网络访问 PyPI 较慢时，可选用清华 PyPI 镜像安装 NiceGUI：
+
+```bash
+python -m pip install nicegui==2.24.1 \
+  -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+检查安装结果：
+
+```bash
+python --version
+python -m pip show nicegui
+```
+
+`pip show` 输出中的 `Version` 应为 `2.24.1`。
+
+## 4. 网络配置
+
+### 4.1 默认参数
+
+| 角色 | 默认 IP 地址 | 默认 UDP 端口 | 用途 |
+| --- | --- | --- | --- |
+| 客户端（运行工程的主机） | `10.42.0.101` | `8002` | 接收动作数据 |
+| 服务器（PN-Link 主节点） | `10.42.0.202` | `8080` | 提供设备连接 |
+
+需要将主机网卡配置到 `10.42.0.x` 网段，例如 `10.42.0.101`，确保主机与 PN-Link 主节点位于同一局域网且 IP 地址不冲突。
+
+### 4.2 工程配置
+
+IP 地址、端口和相关资源路径可在 `web_config.py` 中调整：
+
+```python
 # web_config.py
-SERVER_IP = '10.42.0.202'    # 主节点IP
-SERVER_PORT = 8080           # 主节点端口
-CLIENT_IP = '10.42.0.101'    # 主机IP
-CLIENT_PORT = 8002           # 主机端口
+SERVER_IP = "10.42.0.202"      # PN-Link 主节点 IP
+SERVER_PORT = 8080             # PN-Link 主节点 UDP 端口
+CLIENT_IP = "10.42.0.101"     # 主机 IP
+CLIENT_PORT = 8002             # 主机 UDP 端口
 BVH_HEADER_FILE = "config/bvh_header.json"
-WEB_THREE_HTML = 'web/three_fbx_viewer.html'
+WEB_THREE_HTML = "web/three_fbx_viewer.html"
 ```
 
-- 代码中参数初始化逻辑（`mocap_control.py`）：
+`mocap_control.py` 中的初始化逻辑如下：
 
-```
-# mocap_control.py
+```python
 class MCPControl:
     def __init__(self, msg_queue: multiprocessing.Queue = None):
-        # 初始化应用与配置
         self.app = MCPApplication()
         settings = MCPSettings()
-        # 配置BVH数据格式与转换
+
+        # 配置 BVH 数据格式和转换方式
         settings.set_bvh_data(MCPBvhData.Binary)
         settings.set_bvh_transformation(MCPBvhDisplacement.Enable)
-        settings.set_bvh_rotation(MCPBvhRotation.XYZ)  # 旋转顺序设为XYZ
-        # 配置UDP传输参数
+        settings.set_bvh_rotation(MCPBvhRotation.XYZ)
+
+        # 配置 UDP 传输参数
         settings.SetSettingsUDPEx(CLIENT_IP, CLIENT_PORT)
         settings.SetSettingsUDPServer(SERVER_IP, SERVER_PORT)
 ```
 
-## 四、启动 Web 服务器
+默认骨骼旋转顺序为 `XYZ`。如需调整，请同时确认设备端与工程配置使用相同的旋转顺序。
 
-### 启动步骤
+## 5. 启动 Web 服务
 
-1. 打开终端，进入工程目录：
+1. 打开终端并进入工程根目录：
 
-```
-cd python_webui
-```
+   ```bash
+   cd ~/mocapapi-demo-py
+   ```
 
-2. 启动 Web 服务器：
+2. 激活虚拟环境：
 
-```
-uv run web_ui.py
-```
+   ```bash
+   source venv/bin/activate
+   ```
 
-`uv run` 会在启动前自动检查并同步项目环境，无需激活 `.venv`。首次运行需要下载 Python 和项目依赖，耗时会稍长。
+3. 进入 WebUI 目录并启动服务：
 
-3. 打开浏览器，访问地址：[http://localhost:8081](http://localhost:8081/)
+   ```bash
+   cd python_webui
+   python web_ui.py
+   ```
 
-## 五、指令说明
+4. 在浏览器中访问 [http://localhost:8080](http://localhost:8080/)。
 
-### 指令执行顺序
+## 6. 设备操作
 
-需按以下流程执行指令：
+### 6.1 连接 PN-Link
 
-1. 创建网络链接
-2. 执行采集指令
-3. 输出采集数据
-4. 执行其他指令（如校准）
-5. 停止采集
+前置条件：
 
-### 指令执行流程
+- PN-Link 主节点已上电并正常工作。
+- 主机与主节点位于同一网段。
+- `web_config.py` 中的 IP 地址和端口与实际环境一致。
+- Web 服务已启动。
 
-单条指令的生命周期：
+打开 Web 页面后，状态栏显示绿色“已连接”，表示设备连接成功。
 
-1. 创建指令
-2. 执行指令
-3. 等待指令执行完成
-4. 销毁指令
+### 6.2 开始捕捉
 
-### 校准流程
+1. 点击 **Start Capture**。
+2. 保持站立或坐姿稳定至少 15 秒，等待设备完成初始化。
+3. 为获得更稳定的初始化效果，可额外等待约 10 秒后再开始动作。
 
-## 六、操作流程
+初始化完成后，页面开始接收并显示实时动作数据。
 
-### 1. 连接 PN‑Link 设备
+### 6.3 姿态校准
 
-1. 确保主机与 PN‑Link 主节点网络配置正确（同网段）
-2. 打开浏览器访问[http://localhost:8081](http://localhost:8081/)
-3. 状态栏显示为**绿色 “已连接”**，表示连接成功
+1. 点击 **Calibrate**。
+2. 按页面提示依次完成以下姿态：
 
-### 2. 开始捕捉（Start Capture）
+   - VB-Pose
+   - P-Pose
+   - T-Pose
+   - A-Pose
+   - F-Pose
 
-1. 点击页面中的 “Start Capture” 按钮
-2. 保持站立或坐姿**15 秒**完成初始化（建议额外等待 10 秒以优化效果）
-3. 初始化完成后，设备开始实时捕捉动作数据
+3. 完成所有姿态后等待系统计算校准结果，通常需要 1 至 3 分钟。
+4. 页面显示“Mocap 校准完成！”时，表示校准成功。
 
-### 3. 校准（Calibrate）
+### 6.4 其他操作
 
-1. 点击 “Calibrate” 按钮
-2. 按照页面提示依次完成以下姿态：
+| 操作 | 作用 |
+| --- | --- |
+| **Resume Hands** | 恢复手势捕捉 |
+| **Reset 0 Motion Drift** | 清除运动漂移误差 |
+| **Resume Body** | 恢复身体姿态基准 |
+| **Zero Position** | 将当前位置设置为姿态零点 |
+| **Stop Capture** | 停止动作数据采集 |
 
-- VB‑Pose
-- P‑Pose
-- T‑Pose
-- A‑Pose
-- F‑Pose
+### 6.5 切换数据输出
 
-3. 所有姿态完成后开始计算校准结果 (等待 1‑3 分钟)，页面显示 “Mocap 校准完成！”，表示校准成功
+点击“切换数据输出”，可在以下两种模式间切换：
 
-### 4. 其他核心操作
+| 模式 | 输出内容 |
+| --- | --- |
+| **3D Data** | 完整骨骼位置与旋转数据，可用于浏览器 3D 实时显示 |
+| **Joint Data** | 关节角度数据 |
 
-- **恢复手势（Resume Hands）**：点击按钮可恢复手势捕捉功能
-- **重置零点漂移（Reset 0 Motion Drift）**：点击按钮清除运动漂移误差
-- **恢复身体姿态（Resume Body）**：点击按钮重置身体姿态基准
-- **零点校准（Zero Position）**：点击按钮将当前位置设为姿态零点
-- **停止捕捉（Stop Capture）**：点击按钮停止动作数据采集
+### 6.6 PN-Link 设置
 
-### 5. 3D 数据输出切换
+点击 **PN-Link 设置**，可调整以下参数：
 
-点击 “切换数据输出” 按钮可在两种模式间切换：
-
-- **3D Data**：输出完整骨骼位置与旋转数据，支持浏览器 3D 实时可视化
-- **Joint Data**：输出关节角度信息
-
-### 6. 设备配置（PN‑Link 设置）
-
-点击 “PN‑Link 设置” 按钮打开配置页面，可调整以下参数：
-
-- IP 地址与端口号
+- IP 地址和端口
 - 数据传输格式
 - 骨骼旋转顺序
 
-## 七、常见问题解决
+修改后应确保设备端与工程端的网络和数据格式配置一致。
 
-### 1. 连接失败
+## 7. 指令调用说明
 
-- 检查主机与 PN‑Link 主节点 IP 是否在同网段（如`10.42.0.x`）
-- 确认端口未被占用（默认客户端 8002、服务器 8080）
-- 重启 PN‑Link 设备与 Web 服务器后重试
+### 7.1 推荐执行顺序
 
-### 2. 校准失败
+1. 创建网络连接。
+2. 执行开始采集指令。
+3. 接收并输出采集数据。
+4. 根据需要执行校准或其他控制指令。
+5. 执行停止采集指令。
 
-- 确保初始化阶段（Start Capture 后）保持姿态稳定达 15 秒以上
-- 检查旋转顺序配置是否与设备默认（XYZ）一致
-- 重启设备并重新执行校准流程
+### 7.2 单条指令生命周期
 
-### 3. Python 运行报错 `externally‑managed‑environment`
+每条指令应按以下顺序处理：
 
-> 
-> 原因：直接使用系统 Python 的 pip 安装库，系统安全机制拦截。
-> 解决：不要使用系统 pip，进入 `python_webui` 目录后执行 `uv sync`，再使用 `uv run web_ui.py` 启动。
+1. 创建指令。
+2. 执行指令。
+3. 等待指令执行完成。
+4. 销毁指令。
 
-### 4. `pkgutil` 属性找不到 AttributeError
+## 8. 常见问题
 
-> 
-> 原因：使用高于 3.11 版本 Python 运行本项目，nicegui2.24.1 不兼容高版本 Python。
-> 解决：执行 `uv run python --version` 确认版本。若不是 Python 3.11，执行 `uv sync --python 3.11 --reinstall` 重建项目环境。
+### 8.1 设备连接失败
 
-## 八、系统关闭
+按以下顺序检查：
 
-为避免数据丢失或设备异常，建议按以下步骤关闭系统：
+1. 确认主机与 PN-Link 主节点均已上电并正常连接。
+2. 确认主机 IP 与主节点 IP 位于同一网段，例如 `10.42.0.x`。
+3. 确认 `web_config.py` 中的客户端和服务器 IP 与实际配置一致。
+4. 确认客户端 UDP 端口 `8002` 未被其他程序占用。
+5. 确认防火墙未阻止相关网络通信。
+6. 重启 PN-Link 主节点和 Web 服务后重试。
 
-1. 点击 “Stop Capture” 按钮停止动作捕捉
-2. 关闭 Web 浏览器
-3. 在终端按`Ctrl+C`停止 Web 服务器
+### 8.2 姿态校准失败
+
+- 开始捕捉后，保持姿态稳定至少 15 秒再执行校准。
+- 按页面提示完成全部校准姿态。
+- 确认工程与设备使用相同的骨骼旋转顺序，默认值为 `XYZ`。
+- 若仍然失败，停止捕捉、重启设备，然后重新执行初始化和校准。
+
+### 8.3 出现 `externally-managed-environment`
+
+原因：当前命令尝试向受系统管理的 Python 环境安装第三方包。
+
+解决方法：
+
+```bash
+cd ~/mocapapi-demo-py
+python3.11 -m venv venv
+source venv/bin/activate
+python -m pip install nicegui==2.24.1
+python -m pip install -e ./MocapApi
+```
+
+不要使用系统级 `pip` 直接安装本工程依赖。
+
+### 8.4 出现与 `pkgutil` 相关的 `AttributeError`
+
+该问题可能与 Python 版本或依赖版本不兼容有关。先检查当前解释器：
+
+```bash
+python --version
+which python
+```
+
+确认命令使用的是工程虚拟环境中的 Python。若当前版本高于 3.11，可删除并重新创建 Python 3.11 虚拟环境，然后重新安装依赖。
+
+## 9. 安全退出
+
+为避免采集数据丢失或设备状态异常，建议按以下顺序关闭系统：
+
+1. 点击 **Stop Capture**，停止动作捕捉。
+2. 确认采集已停止后关闭浏览器页面。
+3. 在运行 Web 服务的终端中按 `Ctrl+C`。
+4. 如需退出虚拟环境，执行 `deactivate`。
+
+---
+
+> 本文根据现有操作文档整理。工程目录、页面按钮和 SDK 兼容范围应以实际源码、设备固件及所用 MocapApi SDK 版本为准。
